@@ -90,8 +90,14 @@ public class Calculator {
 
         JButton zeroButton = createButton("0", new Point(0, 270),
                 () -> performActionForNumberButton(resultLabel, "0"));
-        JButton commaButton = createButton(",", new Point(56, 270), () -> {
+        JButton commaButton = createButton(".", new Point(56, 270), () -> {
             //TODO: add a comma logic
+            String number = resultLabel.getText();
+            if (!number.contains(".")) {
+                number += ".";
+            }
+            resultLabel.setText(number);
+
             return true;
         });
         JButton equalsButton = createButton("=", new Point(168, 270), () -> {
@@ -105,7 +111,10 @@ public class Calculator {
                     case ADDITION -> firstNumber + secondNumber;
                 };
 
-                resultLabel.setText(String.valueOf(result));
+                String resultValue = Double.parseDouble(String.format("%.3f", result)) % 2 == 0 ?
+                        String.valueOf(result).replaceFirst("\\.\\d", "")
+                        : String.valueOf(result);
+                resultLabel.setText(resultValue);
             }
 
             return true;
@@ -140,12 +149,26 @@ public class Calculator {
     }
 
     private static boolean performActionForNumberButton(JLabel resultLabel, String digitOfButton) {
-        double number = Double.parseDouble(resultLabel.getText());
-        if ((byte) number == 0 || number == firstNumber) {
+        String numberInString = resultLabel.getText();
+
+        String firstNumberInString = String.valueOf(firstNumber);
+        String[] firstNumberParts = String.valueOf(firstNumber).split("\\.");
+
+        Integer remainderOfFirstNumber = null;
+
+        if (firstNumberParts.length > 1) {
+            remainderOfFirstNumber = Integer.parseInt(firstNumberParts[1]);
+        }
+        if (remainderOfFirstNumber != null && remainderOfFirstNumber == 0) {
+            firstNumberInString = firstNumberInString.replaceFirst("\\.\\d", "");
+        }
+
+
+        if (numberInString.equals("0") || numberInString.equals(firstNumberInString)) {
             resultLabel.setText(digitOfButton);
         } else {
-            number = Double.parseDouble(String.valueOf((int) number).concat(digitOfButton));
-            resultLabel.setText(String.valueOf(number));
+            numberInString += digitOfButton;
+            resultLabel.setText(numberInString);
         }
 
         return true;
@@ -175,9 +198,7 @@ public class Calculator {
 
     private static <T> JButton createButton(String buttonText, Point location, Supplier<T> action) {
         JButton button = new JButton(buttonText);
-        button.addActionListener((actionEvent) -> {
-            action.get();
-        });
+        button.addActionListener((actionEvent) -> action.get());
         button.setLocation(location);
         button.setSize(new Dimension(61, 61));
         button.setVisible(true);
